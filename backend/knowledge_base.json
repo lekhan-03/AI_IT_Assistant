@@ -1,0 +1,26 @@
+[
+  {
+    "id": "KB-001",
+    "title": "GlobalProtect VPN Fails on macOS Sequoia",
+    "content": "Symptom: Users on macOS Sequoia report GlobalProtect VPN gets stuck at 'Connecting...' or fails immediately. Cause: Apple changed the background extension policy in the new OS. Fix: Have the user open System Settings > Privacy & Security > scroll down to 'Security' and click 'Allow' for 'Palo Alto Networks'. Restart the Mac and reconnect.",
+    "tags": ["network", "vpn", "mac", "globalprotect"]
+  },
+  {
+    "id": "KB-002",
+    "title": "Outlook Constant Password Prompts",
+    "content": "Symptom: Outlook keeps prompting for a password even though the user can log into other services successfully. Fix: Do NOT reset the password again. The user has a stale credential saved. Open Windows Credential Manager -> Windows Credentials -> clear any entries related to 'MicrosoftOffice16' or 'Outlook'. Restart Outlook and enter the new password when prompted.",
+    "tags": ["account", "outlook", "password", "prompt"]
+  },
+  {
+    "id": "KB-003",
+    "title": "4th Floor Printer Offline (HP LaserJet Pro)",
+    "content": "Symptom: Users report the 4th floor HP LaserJet Pro is offline or out of toner. Fix: IT does not manage physical printer supplies for the 4th floor. This must be routed to the Facilities team via their portal. Do NOT dispatch an IT technician.",
+    "tags": ["device", "printer", "offline", "facilities"]
+  },
+  {
+    "id": "KB-004",
+    "title": "Salesforce Single Sign-On (SSO) Error 403",
+    "content": "Symptom: User gets a 403 Forbidden error when trying to log into Salesforce via Okta SSO. Cause: The user's Active Directory account is missing the 'Sales_Team' security group. Fix: Add the user to the 'Sales_Team' AD group, wait 15 minutes for sync, and ask them to try again.",
+    "tags": ["account", "salesforce", "sso", "403", "okta"]
+  }
+]

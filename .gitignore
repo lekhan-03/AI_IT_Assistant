@@ -1,0 +1,27 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+
+# Node
+ui/node_modules/
+node_modules/
+
+# Build output (generated, do not need to track)
+# ui/dist is intentionally NOT ignored so Render can serve it
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
