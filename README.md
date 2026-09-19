@@ -1,383 +1,211 @@
 <div align="center">
 
-# 🧠 Triage / Console
+# 🧠 Triage Console
+### AI-Powered IT Support Triage Assistant
 
-### AI-Powered Internal IT Support Triage Assistant
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
+[![Groq](https://img.shields.io/badge/Groq-API-F55036?style=flat-square&logo=groq&logoColor=white)](https://groq.com)
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev)
-[![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
-[![Groq](https://img.shields.io/badge/Groq-API-F55036?style=for-the-badge&logo=groq&logoColor=white)](https://groq.com)
+Turns a short, often incomplete IT support ticket into a structured triage — category, priority, what's missing, a concrete next step, and the reasoning behind it. Asks a clarifying question instead of guessing when there isn't enough information to diagnose safely.
 
-**Triage/console** is a production-grade, full-stack AI agent that accepts raw IT support tickets and instantly returns a structured triage: category, priority, what context is missing, a concrete next step, and the model's reasoning — all powered by a dual-AI consensus engine with an always-on rule-engine fallback.
-
-[Live Demo](#) · [API Reference](#-api-reference) · [Deployment Guide](#-deployment)
+**[Live Demo](https://ai-it-assistant-by9y.onrender.com/)** &nbsp;·&nbsp; **[API Reference](#api-reference)** &nbsp;·&nbsp; **[Design Decisions](#design-decisions)**
 
 </div>
 
 ---
 
-## 📸 Overview
+## Overview
 
-The system runs **two AI models simultaneously** (Google Gemini + Groq) and fuses their outputs into a single **consensus result** using Gemini as the synthesizer. If both models fail or are not configured, a deterministic **Rule Engine** takes over — meaning the app never goes down.
+Gemini and Groq analyze each ticket in parallel, and Gemini synthesizes both outputs into one consensus result. If either model fails, isn't configured, or the API is unreachable, a deterministic **rule engine** takes over automatically — so the app always responds, with zero required configuration.
 
 ```
-Employee Ticket (text)
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│                    Triage Service                       │
-│                                                         │
-│   ┌──────────────┐    ┌──────────────┐                 │
-│   │ Gemini Flash │    │   Groq OSS   │  ← Parallel     │
-│   │  (analyze)   │    │  (analyze)   │    execution     │
-│   └──────┬───────┘    └──────┬───────┘                 │
-│          │                   │                          │
-│          └────────┬──────────┘                         │
-│                   ▼                                     │
-│          ┌────────────────┐                            │
-│          │ Gemini (synth) │  ← Consensus / fusion      │
-│          └────────┬───────┘                            │
-│                   │     on any failure                  │
-│                   └────────► Rule Engine (fallback)     │
-└───────────────────────────────────────────────────────┘
-        │
-        ▼
- Structured JSON Result
- {category, priority, missing_info,
-  next_step, reasoning, confidence, kb_reference}
+Employee Ticket
+      │
+      ▼
+┌─────────────────────────────────────────────┐
+│ Gemini (analyze)      Groq (analyze)        │  parallel
+│         └───────────┬───────────┘           │
+│                     ▼                       │
+│            Gemini (synthesizer)             │  consensus
+│                     │  on failure           │
+│                     └─────────► Rule Engine │  fallback
+└─────────────────────────────────────────────┘
+      │
+      ▼
+{ category, priority, missing_info,
+  next_step, reasoning, confidence, kb_reference }
 ```
+
+**Core policy, enforced at every layer:** recommend a concrete next step only when there's enough information — otherwise ask exactly one targeted follow-up question.
 
 ---
 
-## ✨ Key Features
+## Features
 
-| Feature | Description |
+| | |
 |---|---|
-| **Dual-AI Consensus** | Gemini + Groq run in parallel; outputs are synthesized into one master result |
-| **Rule Engine Fallback** | Deterministic, keyword-weighted triage that works with zero API keys |
-| **BM25 RAG** | In-memory knowledge base retrieval using industry-standard BM25 scoring |
-| **Follow-up Flow** | Asks exactly one targeted question when the ticket is too vague to diagnose |
-| **Priority Detection** | Weighs technical severity *and* business impact (deadline detection, multi-system signals) |
-| **KB References** | Surfaces matching internal articles by ID (e.g. KB-001) with every result |
-| **Token-Optimized** | Compressed prompts, top-k=1 RAG injection, history truncation — minimal API cost |
-| **Modern React UI** | Glassmorphism dark-mode SPA with ambient animations and micro-interactions |
+| **Dual-AI consensus** | Gemini + Groq run in parallel; outputs are fused into one result |
+| **Rule engine fallback** | Deterministic, keyword-weighted, fully explainable — works with zero API keys |
+| **Ask, don't guess** | Asks one targeted follow-up question when a ticket is too vague to diagnose |
+| **Impact-aware priority** | Weighs technical severity *and* business urgency (deadlines, multi-system scope) |
+| **KB-backed reasoning** | BM25 search over an internal knowledge base; results cite a matching article |
+| **Token-optimized** | Compressed prompts and truncated history keep it fast and within free-tier limits |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### Backend
-| Technology | Version | Purpose |
-|---|---|---|
-| **Python** | 3.11+ | Runtime |
-| **Flask** | 3.0.3 | REST API + static file server |
-| **Gunicorn** | 22.0.0 | Production WSGI server |
-| **Google Gemini** | `gemini-2.0-flash` (free tier) | Primary AI engine + Synthesizer |
-| **Groq** | `openai/gpt-oss-120b` (free tier) | Secondary AI engine |
-| **Pydantic** | 2.x | Structured output validation |
-| **BM25** | Custom (pure Python) | In-memory knowledge base search |
-| **ThreadPoolExecutor** | stdlib | Concurrent multi-model execution |
-
-### Frontend
-| Technology | Version | Purpose |
-|---|---|---|
-| **React** | 19 | UI framework |
-| **Vite** | 8.3 | Build tool + dev server |
-| **lucide-react** | 1.47 | Icon library |
-| **Vanilla CSS** | — | Glassmorphism design system |
+| Layer | Stack |
+|---|---|
+| **Backend** | Python 3.11+ · Flask · Gunicorn · Gemini (`gemini-2.0-flash`) · Groq (`gpt-oss-120b`) · Pydantic · custom BM25 |
+| **Frontend** | React 19 · Vite · lucide-react · vanilla CSS |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-it-triage-assistant/
-│
+AI_IT_Assistant/
 ├── backend/
-│   ├── app.py               # Flask app — 2 API endpoints + static server
-│   ├── engine.py            # Core triage logic:
-│   │                        #   RuleEngine, GeminiEngine, GroqEngine,
-│   │                        #   TriageService (orchestrator + synthesizer)
-│   ├── rag.py               # BM25 retrieval engine over knowledge_base.json
-│   ├── knowledge_base.json  # Internal IT KB articles (KB-001 … KB-004)
-│   ├── demo_cli.py          # CLI runner — no server needed
+│   ├── app.py               # Flask app — API endpoints + static server
+│   ├── engine.py              # RuleEngine, GeminiEngine, GroqEngine, TriageService
+│   ├── rag.py                  # BM25 retrieval over knowledge_base.json
+│   ├── knowledge_base.json     # Internal KB articles (KB-001 … KB-004)
+│   ├── demo_cli.py             # Runs sample tickets with no server needed
 │   └── requirements.txt
-│
 ├── ui/
-│   ├── src/
-│   │   ├── App.jsx          # Main SPA — state, API calls, result rendering
-│   │   └── index.css        # Global design system (dark mode, glassmorphism)
-│   ├── dist/                # Production build (served by Flask)
-│   ├── vite.config.js       # Proxy /api → localhost:5000 in dev mode
-│   └── package.json
-│
-├── .env                     # API keys (never commit this!)
-├── .env.example             # Template for environment variables
-├── .gitignore
-├── Procfile                 # Render / Heroku start command
+│   ├── src/                    # App.jsx, index.css
+│   └── dist/                   # Production build, served by Flask
+├── .env.example
+├── Procfile                    # Render start command
 └── README.md
 ```
 
 ---
 
-## ⚡ Quick Start (Local)
+## Quick Start
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+ and npm
-- Git
-
-### 1. Clone the repository
+**Prerequisites:** Python 3.11+, Node.js 18+, npm
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/it-triage-assistant.git
-cd it-triage-assistant
-```
+git clone https://github.com/lekhan-03/AI_IT_Assistant.git
+cd AI_IT_Assistant
 
-### 2. Set up the backend
+# 1. Backend
+cd backend && pip install -r requirements.txt
 
-```bash
-cd backend
-pip install -r requirements.txt
-```
+# 2. API keys (optional)
+cp ../.env.example ../.env
+# edit .env → GEMINI_API_KEY, GROQ_API_KEY
 
-### 3. Configure API keys
+# 3. Frontend
+cd ../ui && npm install && npm run build && cd ..
 
-```bash
-# From the project root:
-cp .env.example .env
-```
-
-Edit `.env` and add your free-tier API keys:
-
-```env
-GEMINI_API_KEY=your_gemini_key_here
-GROQ_API_KEY=your_groq_key_here
-PORT=5000
-```
-
-> **No keys? No problem.** The app works fully offline with the built-in Rule Engine. The status indicator in the UI will show `engine: rules-only` instead of `engine: panel of experts`.
-
-### 4. Build the frontend
-
-```bash
-cd ../ui
-npm install
-npm run build
-cd ..
-```
-
-### 5. Run the server
-
-```bash
+# 4. Run
 python backend/app.py
 ```
+Open **http://localhost:5000**.
 
-Open **http://localhost:5000** in your browser. That's it! ✅
+> **No API keys? No problem.** The app runs fully on the built-in rule engine — the UI shows `engine: rules-only`. Adding `GEMINI_API_KEY` / `GROQ_API_KEY` switches it to `engine: panel of experts`.
 
----
-
-## 🧑‍💻 Development Mode (Hot Reload)
-
-To actively work on the React frontend with instant hot-reload:
-
-**Terminal 1 — Backend**
+**CLI demo (no server needed):**
 ```bash
+python backend/demo_cli.py
+```
+
+**Frontend hot-reload for development:**
+```bash
+# Terminal 1
 python backend/app.py
-```
-
-**Terminal 2 — Frontend dev server**
-```bash
-cd ui
-npm run dev
-```
-
-Open **http://localhost:5173** — the Vite dev server automatically proxies all `/api` calls to Flask on port 5000.
-
----
-
-## 🔌 API Reference
-
-### `GET /api/status`
-
-Returns the currently active engine mode.
-
-**Response**
-```json
-{
-  "mode": "panel of experts (gemini, groq)"
-}
+# Terminal 2
+cd ui && npm run dev   # → http://localhost:5173, proxies /api to Flask
 ```
 
 ---
 
-### `POST /api/triage`
+## API Reference
 
-Analyzes a support ticket and returns a structured triage result.
+**`POST /api/triage`**
 
-**Request Body**
 ```json
+// request
 {
-  "ticket_text": "My Outlook keeps asking for my password after I changed it.",
+  "ticket_text": "Outlook keeps asking for my password since I changed it.",
   "history": []
 }
-```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `ticket_text` | `string` | ✅ | The raw support ticket text |
-| `history` | `array` | ❌ | Prior follow-up Q&A pairs: `[{"question": "...", "answer": "..."}]` |
-
-**Response**
-```json
+// response
 {
-  "results": [
-    {
-      "category": "Account",
-      "priority": "High",
-      "missing_info": [],
-      "next_step": "Do NOT reset the password. Open Windows Credential Manager...",
-      "reasoning": "Classic stale-credential signature after a password change.",
-      "needs_followup": false,
-      "follow_up_question": null,
-      "confidence": "high",
-      "engine": "llm (gemini)",
-      "kb_reference": "KB-002"
-    }
-  ]
+  "category": "Account",
+  "priority": "High",
+  "missing_info": [],
+  "next_step": "Update the stored credential in Windows Credential Manager instead of resetting the password again.",
+  "reasoning": "Classic stale-credential signature after a password change.",
+  "needs_followup": false,
+  "confidence": "high",
+  "engine": "llm (gemini)",
+  "kb_reference": "KB-002"
 }
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `category` | `string` | `Network`, `Account`, `Application`, `Device`, or `Other` |
-| `priority` | `string` | `Low`, `Medium`, `High`, or `Critical` |
-| `missing_info` | `string[]` | List of facts that would improve confidence |
-| `next_step` | `string` | Concrete action for the support engineer |
-| `reasoning` | `string` | Evidence-based explanation of the diagnosis |
-| `needs_followup` | `bool` | `true` if ticket is too vague for a diagnosis |
-| `follow_up_question` | `string\|null` | The one targeted question to ask the employee |
-| `confidence` | `string` | `low`, `medium`, or `high` |
-| `engine` | `string` | Which engine produced this result |
-| `kb_reference` | `string\|null` | Matching KB article ID, e.g. `"KB-002"` |
+| Field | Description |
+|---|---|
+| `category` | `Network`, `Account`, `Application`, `Device`, or `Other` |
+| `priority` | `Low`, `Medium`, `High`, or `Critical` |
+| `missing_info` | Facts that would improve diagnostic confidence |
+| `needs_followup` / `follow_up_question` | Set when the ticket is too vague to diagnose |
+| `confidence` | `low`, `medium`, or `high` |
+| `kb_reference` | Matching internal KB article ID, if any |
+
+**`GET /api/status`** → returns the active engine mode.
 
 ---
 
-## 🌐 Deployment
+## Design Decisions
 
-### Render.com (Recommended — Free Tier)
+**Rule engine alongside the AI models.** A triage tool that occasionally hallucinates a diagnosis from two lines of text is worse than useless to a support team. The rule engine is the explainable backbone — every output traces back to a specific signal in the ticket. The AI layer adds nuance without replacing that underlying policy.
 
-1. Push your repo to GitHub (ensure `.env` is in `.gitignore`)
-2. Go to [render.com](https://render.com) → **New → Web Service**
-3. Connect your GitHub repository
-4. Configure:
-   - **Build Command:** `pip install -r backend/requirements.txt`
-   - **Start Command:** `gunicorn --bind 0.0.0.0:$PORT backend.app:app`
-5. Add Environment Variables: `GEMINI_API_KEY`, `GROQ_API_KEY`
-6. Click **Deploy** — your live URL will be `https://your-app.onrender.com` ✅
+**Ask a question instead of guessing.** Both layers follow the same rule: only recommend a concrete step when there's enough information, otherwise ask one well-targeted question — the way a real L1 engineer works a two-word ticket.
 
-### Railway.app
+**BM25 over a vector database.** The standard choice for keyword search at this scale (it's what Elasticsearch uses under the hood). For a KB of tens to a few hundred articles, in-memory BM25 is faster, free, and needs no extra infrastructure.
 
-1. New Project → Deploy from GitHub
-2. Add env vars: `GEMINI_API_KEY`, `GROQ_API_KEY`
-3. Railway auto-detects Python — done.
-
-### Docker / Self-hosted
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY . .
-RUN pip install -r backend/requirements.txt
-EXPOSE 5000
-ENV PORT=5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "backend.app:app"]
-```
-
-```bash
-docker build -t triage-console .
-docker run -p 5000:5000 --env-file .env triage-console
-```
+**Token-optimized prompts.** Free-tier APIs are rate-limited by tokens per minute, so the system uses the minimum viable context — compressed prompts, top-1 RAG injection, truncated history — to stay fast and within free-tier limits.
 
 ---
 
-## 🧪 Running Tests
-
-A comprehensive load & stress test suite is included:
+## Testing
 
 ```bash
-# Make sure the server is running first, then:
 python tests/load_test.py
 ```
-
-**Covers:**
-- ✅ BM25 RAG unit tests (relevance, empty query, gibberish)
-- ✅ Rule Engine unit tests (all 6 ticket types, priority, follow-up)
-- ✅ API endpoint tests (status, frontend, triage, malformed inputs)
-- ✅ Concurrency load test (15 requests × 5 concurrent workers)
-- ✅ Edge cases (emoji, non-English, SQL injection, bad schema)
-
-**Load test results (baseline):**
-- Avg response: ~5.5s | Max: ~14s | Min: ~3s
-- 0 server errors under full concurrent load
-- 93–100% pass rate
+Covers BM25 retrieval, rule-engine classification across ticket types, API endpoint behavior including malformed input, and a concurrency load test. Baseline: ~5.5s average response, 0 server errors under load.
 
 ---
 
-## 🧠 Design Decisions
+## Deployment
 
-**Why a Rule Engine alongside AI?**
-A triage tool that occasionally halluccinates a diagnosis is worse than useless to a support team. The Rule Engine is the trustworthy, fully-explainable backbone. The AI layer adds nuance — better-phrased reasoning, edge-case handling — without replacing the underlying policy.
-
-**Why ask a question instead of guessing?**
-Both the Rule Engine and AI follow the same policy: *only recommend a concrete next step when there's enough information; otherwise ask exactly one well-targeted question.* This mirrors how a real L1 engineer handles a two-word ticket.
-
-**Why BM25 over a Vector Database?**
-BM25 is the industry standard for keyword search (used by Elasticsearch under the hood). For an internal KB with tens to hundreds of articles, in-memory BM25 is faster, completely free, and requires zero infrastructure. A Vector DB is only warranted at the thousands-of-documents scale.
-
-**Why token-optimize the prompts?**
-Free-tier APIs have rate limits measured in tokens-per-minute. The system is deliberately engineered to use the minimum viable context: compressed system prompt, top-1 RAG injection, last-2-history truncation, and minified synthesizer payloads. This means faster responses and higher throughput within free limits.
+| Platform | Steps |
+|---|---|
+| **Render** (free tier) | Connect repo → build `pip install -r backend/requirements.txt` → start `gunicorn --bind 0.0.0.0:$PORT backend.app:app` → set `GEMINI_API_KEY`, `GROQ_API_KEY` |
+| **Docker** | `docker build -t triage-console .` → `docker run -p 5000:5000 --env-file .env triage-console` |
 
 ---
 
-## 🗺️ Knowledge Base
-
-The internal KB is stored in `backend/knowledge_base.json` and searched using BM25 on every request. Add new articles by appending objects with this schema:
-
-```json
-{
-  "id": "KB-005",
-  "title": "Short, descriptive title",
-  "content": "Symptom: ... Cause: ... Fix: ...",
-  "tags": ["keyword1", "keyword2"]
-}
-```
-
-No restart needed — the KB is loaded fresh on server start.
-
----
-
-## 🔑 Environment Variables
+## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `GEMINI_API_KEY` | Optional | Google AI Studio free-tier key |
 | `GROQ_API_KEY` | Optional | Groq Cloud free-tier key |
-| `PORT` | Optional | Server port (default: `5000`) |
-
----
-
-## 📜 License
-
-MIT — free to use, modify, and distribute.
+| `PORT` | Optional | Server port (default `5000`) |
 
 ---
 
 <div align="center">
 
-Built with ❤️ by the team · Powered by Google Gemini + Groq + React
+MIT License · Built by Lekhan
 
 </div>
