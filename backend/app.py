@@ -1,5 +1,11 @@
-from flask import Flask, request, jsonify, send_from_directory
+import sys
 import os
+
+# Ensure sibling modules (engine.py, rag.py) are importable
+# regardless of where gunicorn is launched from.
+sys.path.insert(0, os.path.dirname(__file__))
+
+from flask import Flask, request, jsonify, send_from_directory
 
 from engine import TriageService
 
